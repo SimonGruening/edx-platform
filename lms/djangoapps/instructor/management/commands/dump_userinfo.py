@@ -18,7 +18,9 @@ from shoppingcart.models import PaidCourseRegistration
 from student.models import UserProfile
 
 
-PROFILE_FIELDS = [('first_name', "First Name"),
+PROFILE_FIELDS = [
+                  ('username', "Username"), # TODO: does this mess CME ingestion up? If so, drop; it's just for debug.
+                  ('first_name', "First Name"),
                   ('middle_initial', "Middle Initial"),
                   ('last_name', "Last Name"),
                   ('email', "Email Address"),
@@ -138,7 +140,7 @@ class Command(BaseCommand):
                 cme_profile = cme_profiles[0]
 
             for field, label in PROFILE_FIELDS:
-                fieldvalue = getattr(cme_profile, field, '') or getattr(usr_profile, field, '')
+                fieldvalue = getattr(cme_profile, field, '') or getattr(usr_profile, field, '') or getattr(student, field, '')
                 student_dict[label] = fieldvalue
 
             # Learner Registration Data
