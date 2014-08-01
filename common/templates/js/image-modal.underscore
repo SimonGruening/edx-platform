@@ -1,38 +1,38 @@
 <div class="wrapper-modal wrapper-modal-image">
   <section class="image-link">
-    <%= smallHTML%>
+    <%= smallHtml %>
     <a href="#" class="modal-ui-icon action-fullscreen" role="button">
+      <i class="icon-fullscreen icon-large"></i>
       <span class="label">
-        <i class="icon-fullscreen icon-large"></i> <%= gettext("Fullscreen") %>
+         <%= gettext("Fullscreen") %>
       </span>
     </a>
   </section>
-  
   <section class="image-modal">
     <section class="image-content">
       <div class="image-wrapper">
-        <img alt="<%= largeALT %>, <%= gettext('Large') %>" src="<%= largeSRC %>" />
+        <img alt="<%= largeAlt %>, <%= gettext('Large') %>" src="<%= largeSrc %>" />
       </div>
-      
       <a href="#" class="modal-ui-icon action-close" role="button">
+        <i class="icon-remove icon-large"></i>
         <span class="label">
-          <i class="icon-remove icon-large"></i> <%= gettext("Close") %>
+           <%= gettext("Close") %>
         </span>
       </a>
-      
       <ul class="image-controls">
         <li class="image-control">
           <a href="#" class="modal-ui-icon action-zoom-in" role="button">
+            <i class="icon-zoom-in icon-large"></i>
             <span class="label">
-              <i class="icon-zoom-in icon-large"></i> <%= gettext("Zoom In") %>
+               <%= gettext("Zoom In") %>
             </span>
           </a>
         </li>
-    
         <li class="image-control">
           <a href="#" class="modal-ui-icon action-zoom-out is-disabled" role="button">
+            <i class="icon-zoom-out icon-large"></i>
             <span class="label">
-              <i class="icon-zoom-out icon-large"></i> <%= gettext("Zoom Out") %>
+               <%= gettext("Zoom Out") %>
             </span>
           </a>
         </li>
@@ -40,3 +40,4 @@
     </section>
   </section>
 </div>
+
