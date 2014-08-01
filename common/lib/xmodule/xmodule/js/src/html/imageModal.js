@@ -1,4 +1,7 @@
-function setupFullScreenImage() {
+$(document).on('load_full-screen-image', 'a.modal-content IMG',
+    function (event, param1, param2) {
+
+
   $("a.modal-content").each(function() {
     var smallImageObject = $(this).children();
     var largeImageSRC = $(this).attr('href');
@@ -105,3 +108,6 @@ function setupFullScreenImage() {
     }
   });
 }
+
+
+);

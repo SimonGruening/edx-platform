@@ -6,7 +6,7 @@ data: |
         <p>Use the full screen image tool to allow students to open the image in the full screen, zoom in on the image, and drag the image within the screen.</p>
         <a href="http://static.class.stanford.edu/stanford-hills-big.jpg" class="modal-content"><img alt="The Stanford Hills" src="http://static.class.stanford.edu/stanford-hills-small.jpg" /></a>
         <script type="text/javascript">
-            $(function () {
-                setupFullScreenImage();
-            });
+            $('a.modal-content IMG')
+                .trigger('load_full-screen-image')
+            ;
         </script>
