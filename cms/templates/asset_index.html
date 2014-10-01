@@ -24,7 +24,13 @@
 
         var assets = new AssetCollection();
         assets.url = "${asset_callback_url}";
-        var assetsView = new AssetsView({collection: assets, el: $('.assets-wrapper')});
+        var assetsView = new AssetsView({
+            collection: assets,
+            el: $('.assets-wrapper'),
+            uploadChunkSizeInMBs: ${chunk_size_in_mbs},
+            maxFileSizeInMBs: ${max_file_size_in_mbs},
+            maxFileSizeRedirectUrl: "${max_file_size_redirect_url}"
+        });
         assetsView.render();
 
     }); // end of require()
@@ -90,6 +96,7 @@
     <a href="#" class="close-button"><i class="icon-remove-sign"></i> <span class="sr">${_('close')}</span></a>
     <div class="modal-body">
         <h1 class="title">${_("Upload New File")}</h1>
+        <h2>${_("Max per-file size: {max_filesize}MB").format(max_filesize=max_file_size_in_mbs)}</h2>
         <p class="file-name">
         <div class="progress-bar">
             <div class="progress-fill"></div>
