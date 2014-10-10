@@ -739,6 +739,23 @@ def registered_for_course(course, user):
         return False
 
 
+def get_cosmetic_display_price(course, registration_price):
+    """
+    Return Course Price as a string preceded by correct currency, or 'Free'
+    """
+    currency_symbol = settings.PAID_COURSE_REGISTRATION_CURRENCY[1]
+
+    price = course.cosmetic_display_price
+    if registration_price > 0:
+        price = registration_price
+
+    if price:
+        return "{}{}".format(currency_symbol, price)
+    else:
+        # Translators: Course Price is 0
+        return _('Free')
+
+
 @ensure_csrf_cookie
 @cache_if_anonymous()
 def course_about(request, course_id):
@@ -782,30 +799,32 @@ def course_about(request, course_id):
         registration_price = 0
         in_cart = False
         reg_then_add_to_cart_link = ""
-
+    
         _is_shopping_cart_enabled = is_shopping_cart_enabled()
-        if _is_shopping_cart_enabled:
+        if (_is_shopping_cart_enabled):
             registration_price = CourseMode.min_course_price_for_currency(course_key,
                                                                           settings.PAID_COURSE_REGISTRATION_CURRENCY[0])
             if request.user.is_authenticated():
                 cart = shoppingcart.models.Order.get_cart_for_user(request.user)
                 in_cart = shoppingcart.models.PaidCourseRegistration.contained_in_order(cart, course_key) or \
                     shoppingcart.models.CourseRegCodeItem.contained_in_order(cart, course_key)
-
+    
             reg_then_add_to_cart_link = "{reg_url}?course_id={course_id}&enrollment_action=add_to_cart".format(
                 reg_url=reverse('register_user'), course_id=course.id.to_deprecated_string())
-
+    
+        course_price = get_cosmetic_display_price(course, registration_price)
+    
         # Used to provide context to message to student if enrollment not allowed
         can_enroll = has_access(request.user, 'enroll', course)
         invitation_only = course.invitation_only
         is_course_full = CourseEnrollment.is_course_full(course)
-
+    
         # Register button should be disabled if one of the following is true:
         # - Student is already registered for course
         # - Course is already full
         # - Student cannot enroll in course
         active_reg_button = not(registered or is_course_full or not can_enroll)
-
+    
         is_shib_course = uses_shib(course)
 
         # get prerequisite courses display names
@@ -817,8 +836,8 @@ def course_about(request, course_id):
             'studio_url': studio_url,
             'registered': registered,
             'course_target': course_target,
-            'registration_price': registration_price,
-            'currency_symbol': settings.PAID_COURSE_REGISTRATION_CURRENCY[1],
+            'is_cosmetic_price_enabled': settings.FEATURES.get('ENABLE_COSMETIC_DISPLAY_PRICE'),
+            'course_price': course_price,
             'in_cart': in_cart,
             'reg_then_add_to_cart_link': reg_then_add_to_cart_link,
             'show_courseware_link': show_courseware_link,
