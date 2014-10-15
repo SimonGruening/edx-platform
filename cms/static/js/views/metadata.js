@@ -33,10 +33,15 @@ function(BaseView, _, MetadataModel, AbstractEditor, FileUpload, UploadDialog, V
                             'Float': 'Number',
                             'Integer': 'Number'
                         },
-                        type = model.getType();
+                        type = model.getType(),
+                        options = model.get("options");
 
                     if (conversions[type]) {
                         type = conversions[type];
+                    }
+
+                    if ("warning" in options) {
+                        type = "NumberWithWarning";
                     }
 
                     if (_.isFunction(Metadata[type])) {
@@ -218,6 +223,44 @@ function(BaseView, _, MetadataModel, AbstractEditor, FileUpload, UploadDialog, V
             }
         }
 
+    });
+
+    Metadata.NumberWithWarning = Metadata.Number.extend({
+        initialize: function() {
+            Metadata.Number.prototype.initialize.apply(this);
+            var options = this.model.get("options");
+            this.msg = options["warning"];
+            // show initial warning if necessary
+            this.checkWarning();
+        },
+
+        changed: function() {
+            Metadata.Number.prototype.changed.apply(this);
+            this.checkWarning();
+        },
+
+        checkWarning: function() {
+            var value = this.getValueFromEditor();
+            if (parseInt(value)) {
+                this.showWarning();
+            } else {
+                this.removeWarning(); 
+            }
+        },
+
+        showWarning: function() {
+            if (this.$(".setting-help-warning").length < 1) {
+                var $warning = this.$(".setting-help").clone();
+                $warning
+                    .text(this.msg)
+                    .addClass("setting-help-warning");
+                this.$(".setting-help").after($warning);
+            }
+        },
+
+        removeWarning: function() {
+            this.$(".setting-help-warning").remove();
+        },
     });
 
     Metadata.Option = AbstractEditor.extend({

@@ -9,7 +9,7 @@ from .capa_base import CapaMixin, CapaFields, ComplexEncoder
 from .progress import Progress
 from xmodule.x_module import XModule, module_attr
 from xmodule.raw_module import RawDescriptor
-from xmodule.exceptions import NotFoundError, ProcessingError
+from xmodule.exceptions import NotFoundError, ProcessingError, TimeExpiredError
 
 log = logging.getLogger("edx.courseware")
 
@@ -61,6 +61,7 @@ class CapaModule(CapaMixin, XModule):
             'problem_reset': self.reset_problem,
             'problem_save': self.save_problem,
             'problem_show': self.get_answer,
+            'problem_start': self.start_problem,
             'score_update': self.update_score,
             'input_ajax': self.handle_input_ajax,
             'ungraded_response': self.handle_ungraded_response
@@ -78,6 +79,10 @@ class CapaModule(CapaMixin, XModule):
             "Please refresh your page."
         )
 
+        time_expired_error_message = _(
+            "This problem's time has expired. Please refresh your page."
+        )
+
         if dispatch not in handlers:
             return 'Error: {} is not a known capa action'.format(dispatch)
 
@@ -89,6 +94,10 @@ class CapaModule(CapaMixin, XModule):
         except NotFoundError as err:
             _, _, traceback_obj = sys.exc_info()  # pylint: disable=redefined-outer-name
             raise ProcessingError, (not_found_error_message, err), traceback_obj
+
+        except TimeExpiredError as err:
+            _, _, traceback_obj = sys.exc_info()  # pylint: disable=redefined-outer-name
+            raise ProcessingError, (time_expired_error_message, err), traceback_obj
 
         except Exception as err:
             _, _, traceback_obj = sys.exc_info()  # pylint: disable=redefined-outer-name
