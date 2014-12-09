@@ -5,12 +5,16 @@ from util.json_request import JsonResponse
 import json
 
 from courseware import models
+from django.conf import settings
 from django.db.models import Count
 from django.utils.translation import ugettext as _
 
 from xmodule.modulestore.django import modulestore
 from xmodule.modulestore.inheritance import own_metadata
 from instructor_analytics.csvs import create_csv_response
+
+from analyticsclient.client import Client
+from analyticsclient.exceptions import NotFoundError
 
 from opaque_keys.edx.locations import Location
 
@@ -87,6 +91,7 @@ def get_sequential_open_distrib(course_id):
 
     # Build set of "opened" data for each subsection that has "opened" data
     sequential_open_distrib = {}
+
     for row in db_query:
         row_loc = course_id.make_usage_key_from_deprecated_string(row['module_state_key'])
         sequential_open_distrib[row_loc] = row['count_sequential']
@@ -152,8 +157,10 @@ def get_d3_problem_grade_distrib(course_id):
       'data' - data for the d3_stacked_bar_graph function of the grade distribution for that problem
     """
 
-    prob_grade_distrib, total_student_count = get_problem_grade_distribution(course_id)
     d3_data = []
+
+    # Connect to analytics data client
+    client = Client(base_url=settings.ANALYTICS_SERVER_URL, auth_token=settings.ANALYTICS_API_KEY)
 
     # Retrieve course object down to problems
     course = modulestore().get_course(course_id, depth=4)
@@ -180,11 +187,32 @@ def get_d3_problem_grade_distrib(course_id):
                         # Construct label to display for this problem
                         label = "P{0}.{1}.{2}".format(c_subsection, c_unit, c_problem)
 
-                        # Only problems in prob_grade_distrib have had a student submission.
-                        if child.location in prob_grade_distrib:
+                        problem = None
+                        grade_distribution = []
+
+                        try:
+                            problem = client.modules(course_id, child.location)
+                        except NotFoundError:
+                            pass
+
+                        if problem:
+                            grade_distribution = problem.grade_distribution()
+
+                        # Only problems with recorded scores have had student submissions.
+                        if len(grade_distribution) > 0:
 
                             # Get max_grade, grade_distribution for this problem
-                            problem_info = prob_grade_distrib[child.location]
+                            problem_info = {}
+                            total_student_count = 0
+
+                            for score in grade_distribution:
+                                total_student_count = total_student_count + score['count']
+                                problem_info['max_grade'] = score['max_grade']
+
+                                if 'grade_distrib' in problem_info:
+                                    problem_info['grade_distrib'].append((score['grade'], score['count']))
+                                else:
+                                    problem_info['grade_distrib'] = [(score['grade'], score['count'])]
 
                             # Get problem_name for tooltip
                             problem_name = own_metadata(child).get('display_name', '')
@@ -198,8 +226,8 @@ def get_d3_problem_grade_distrib(course_id):
 
                                 # Compute percent of students with this grade
                                 student_count_percent = 0
-                                if total_student_count.get(child.location, 0) > 0:
-                                    student_count_percent = count_grade * 100 / total_student_count[child.location]
+                                if total_student_count > 0:
+                                    student_count_percent = count_grade * 100 / total_student_count
 
                                 # Tooltip parameters for problem in grade distribution view
                                 tooltip = {
@@ -243,12 +271,14 @@ def get_d3_sequential_open_distrib(course_id):
       'display_name' - display name for the section
       'data' - data for the d3_stacked_bar_graph function of how many students opened each sequential/subsection
     """
-    sequential_open_distrib = get_sequential_open_distrib(course_id)
 
     d3_data = []
 
     # Retrieve course object down to subsection
     course = modulestore().get_course(course_id, depth=2)
+
+    # Connect to analytics data client
+    client = Client(base_url=settings.ANALYTICS_SERVER_URL, auth_token=settings.ANALYTICS_API_KEY)
 
     # Iterate through sections, subsections
     for section in course.get_children():
@@ -263,8 +293,13 @@ def get_d3_sequential_open_distrib(course_id):
             subsection_name = own_metadata(subsection).get('display_name', '')
 
             num_students = 0
-            if subsection.location in sequential_open_distrib:
-                num_students = sequential_open_distrib[subsection.location]
+
+            try:
+                module = client.modules(course_id, subsection.location)
+                sequential_open = module.sequential_open_distribution()
+                num_students = sequential_open[0]['count']
+            except NotFoundError:
+                pass
 
             stack_data = []
 
@@ -339,8 +374,8 @@ def get_d3_section_grade_distrib(course_id, section):
                         'display_name': own_metadata(child).get('display_name', ''),
                     }
 
-    # Retrieve grade distribution for these problems
-    grade_distrib = get_problem_set_grade_distrib(course_id, problem_set)
+    # Connect to analytics data client
+    client = Client(base_url=settings.ANALYTICS_SERVER_URL, auth_token=settings.ANALYTICS_API_KEY)
 
     d3_data = []
 
@@ -348,9 +383,21 @@ def get_d3_section_grade_distrib(course_id, section):
     for problem in problem_set:
         stack_data = []
 
-        if problem in grade_distrib:  # Some problems have no data because students have not tried them yet.
-            max_grade = float(grade_distrib[problem]['max_grade'])
-            for (grade, count_grade) in grade_distrib[problem]['grade_distrib']:
+        grade_distribution = []
+
+        try:
+            module = client.modules(course_id, problem)
+            grade_distribution = module.grade_distribution()
+        except NotFoundError:
+            pass
+
+        # Only problems with recorded scores have had student submissions.
+        if len(grade_distribution) > 0:
+            for score in grade_distribution:
+                max_grade = score['max_grade']
+                grade = score['grade']
+                count_grade = score['count']
+
                 percent = 0.0
                 if max_grade > 0:
                     percent = round((grade * 100.0) / max_grade, 1)
@@ -438,6 +485,7 @@ def get_students_opened_subsection(request, csv=False):
     If 'csv' is True, returns a header array, and an array of arrays in the format:
     student names, usernames for CSV download.
     """
+
     module_state_key = Location.from_deprecated_string(request.GET.get('module_id'))
     csv = request.GET.get('csv')
 
