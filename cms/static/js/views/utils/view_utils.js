@@ -5,7 +5,8 @@ define(["jquery", "underscore", "gettext", "js/views/feedback_notification", "js
     function ($, _, gettext, NotificationView, PromptView) {
         var toggleExpandCollapse, showLoadingIndicator, hideLoadingIndicator, confirmThenRunOperation,
             runOperationShowingMessage, disableElementWhileRunning, getScrollOffset, setScrollOffset,
-            setScrollTop, redirect, reload, hasChangedAttributes, deleteNotificationHandler;
+            setScrollTop, redirect, reload, hasChangedAttributes, deleteNotificationHandler,
+            keywordValidator;
 
         /**
          * Toggles the expanded state of the current element.
@@ -173,6 +174,33 @@ define(["jquery", "underscore", "gettext", "js/views/feedback_notification", "js
             return false;
         };
 
+        keywordValidator = (function () {
+            var regexp = /%%+[^%]+%%/g;
+            var keywords = ['%%USER_ID%%', '%%USER_FULLNAME%%', '%%COURSE_DISPLAY_NAME%%', '%%COURSE_END_DATE%%'];
+            var validate = function (string) {
+                var regex_match = string.match(regexp);
+                var found_keywords = regex_match == null ? [] : regex_match;
+                var invalid_keywords = [];
+                var num_found = found_keywords.length;
+                var curr_keyword;
+
+                $.each(found_keywords, function(i, keyword) {
+                    if ($.inArray(keyword, keywords) == -1) {
+                        invalid_keywords.push(keyword);
+                    }
+                });
+
+                return {
+                    'is_valid': invalid_keywords.length == 0,
+                    'invalid_keywords': invalid_keywords,
+                }
+
+            };
+            return {
+                'validate_string': validate,
+            };
+        }());
+
         return {
             'toggleExpandCollapse': toggleExpandCollapse,
             'showLoadingIndicator': showLoadingIndicator,
@@ -186,6 +214,7 @@ define(["jquery", "underscore", "gettext", "js/views/feedback_notification", "js
             'setScrollOffset': setScrollOffset,
             'redirect': redirect,
             'reload': reload,
-            'hasChangedAttributes': hasChangedAttributes
+            'hasChangedAttributes': hasChangedAttributes,
+            'keywordValidator': keywordValidator,
         };
     });
