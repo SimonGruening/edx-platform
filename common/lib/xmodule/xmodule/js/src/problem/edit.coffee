@@ -357,7 +357,7 @@ class @MarkdownEditingDescriptor extends XModule.Descriptor
           endHints = '';  // save these up to emit at the end
 
           for (i = 0; i < options.length; i += 1) {
-              if(options[i].length > 0) {
+              if(options[i].trim().length > 0) {
                   // detect the {{ ((A*B)) ...}} case first
                   // emits: <compoundhint value="A*B">AB hint</compoundhint>
                                     

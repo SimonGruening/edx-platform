@@ -1,4 +1,4 @@
-# Test the parsing of extended-hints in double bracket sections {{ ... }}
+# This file tests the parsing of  extended-hints, double bracket sections {{ .. }}
 # for all sorts of markdown.
 describe 'drop down optionresponse components', ->
   it 'multiple multiline (new-style) drop down with hints', ->
@@ -18,6 +18,7 @@ describe 'drop down optionresponse components', ->
       [[
         dogs		{{ NOPE::Not dogs, not cats, not toads }}
         (FACES)	{{ With lots of makeup, doncha know?}}
+            
         money       {{ Clowns don't have any money, of course }}
         donkeys     {{don't be an ass.}}
         -no hint-
@@ -160,20 +161,20 @@ describe 'checkbox components', ->
   it 'multiple checkbox components', ->
     data = MarkdownEditingDescriptor.markdownToXml("""
       >>Select all the fruits from the list<<
-
+            
       [x] Apple     	 	 {{ selected: You're right that apple is a fruit. }, {unselected: Remember that apple is also a fruit.}}
       [ ] Mushroom	   	 {{U: You're right that mushrooms aren't fruit}, { selected: Mushroom is a fungus, not a fruit.}}
       [x] Grape		     {{ selected: You're right that grape is a fruit }, {unselected: Remember that grape is also a fruit.}}
       [ ] Mustang
       [ ] Camero            {{S:I don't know what a Camero is but it isn't a fruit.},{U:What is a camero anyway?}}
 
-
+                
       {{ ((A*B)) You're right that apple is a fruit, but there's one you're missing. Also, mushroom is not a fruit.}}
       {{ ((B*C)) You're right that grape is a fruit, but there's one you're missing. Also, mushroom is not a fruit.    }}
 
 
       >>Select all the vegetables from the list<<
-
+             
       [ ] Banana     	 	 {{ selected: No, sorry, a banana is a fruit. }, {unselected: poor banana.}}
       [ ] Ice Cream
       [ ] Mushroom	   	 {{U: You're right that mushrooms aren't vegetables.}, { selected: Mushroom is a fungus, not a vegetable.}}
@@ -316,7 +317,7 @@ describe 'multiple choice components', ->
   it 'multiple choice with hints', ->
     data = MarkdownEditingDescriptor.markdownToXml("""
       >>Select the fruit from the list<<
-
+                     
             () Mushroom	  	 {{ Mushroom is a fungus, not a fruit.}}
             () Potato
            (x) Apple     	 	 {{ OUTSTANDING::Apple is indeed a fruit.}}
@@ -365,6 +366,7 @@ describe 'multiple choice components', ->
                      >>Select the vegetables from the list<<
 
                                 () Mushroom	  	 {{ Mushroom is a fungus, not a vegetable.}}
+                                                      
                                 (x) Potato	                 {{ Potato is a root vegetable. }}
                                 () Apple     	 	 {{ OOPS::Apple is a fruit.}}
                        
@@ -503,6 +505,7 @@ describe 'numeric input components', ->
 
   # The output xml here shows some of the quirks of how historical markdown parsing does or does not put
   # in blank lines.
+  # TODO nparlante: there's a bug in the parsing stack if the >>text<< is the same twice
   it 'numeric input with hints and demand hints', ->
     data = MarkdownEditingDescriptor.markdownToXml("""
         >>text1<<
